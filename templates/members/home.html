@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - The Fit Forge Gym Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <h1 class="display-4">Welcome to The Fit Forge Gym</h1>
+            <p class="lead">Professional gym management system for tracking members, payments, and operations.</p>
+            {% if not user.is_authenticated %}
+            <hr class="my-4">
+            <p>Professional gym management made simple and efficient.</p>
+            <a class="btn btn-light btn-lg me-3" href="{% url 'login' %}" role="button">
+                <i class="fas fa-sign-in-alt"></i> Staff Login
+            </a>
+            <a class="btn btn-outline-light btn-lg" href="#features" role="button">
+                <i class="fas fa-info-circle"></i> Learn More
+            </a>
+            {% else %}
+            <hr class="my-4">
+            <p>Welcome back! Manage your gym operations efficiently with our comprehensive tools.</p>
+            <a class="btn btn-light btn-lg" href="{% url 'dashboard' %}" role="button">
+                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card" id="features">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-info-circle"></i> Gym Services</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> State-of-the-art equipment</li>
+                    <li><i class="fas fa-check text-success"></i> Personal training sessions</li>
+                    <li><i class="fas fa-check text-success"></i> Group fitness classes</li>
+                    <li><i class="fas fa-check text-success"></i> Nutrition counseling</li>
+                    <li><i class="fas fa-check text-success"></i> Flexible membership plans</li>
+                    <li><i class="fas fa-check text-success"></i> 24/7 access</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-clock"></i> Operating Hours</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Monday - Friday:</strong> 5:00 AM - 11:00 PM</p>
+                <p><strong>Saturday - Sunday:</strong> 6:00 AM - 10:00 PM</p>
+                <p><strong>Holidays:</strong> 7:00 AM - 9:00 PM</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Manage Members</h5>
+                <p class="card-text">View, search, and manage all gym members</p>
+                <a href="{% url 'member_list' %}" class="btn btn-primary">View Members</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Enroll Member</h5>
+                <p class="card-text">Add new members with automated features</p>
+                <a href="{% url 'member_enroll' %}" class="btn btn-success">Enroll Now</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Reports</h5>
+                <p class="card-text">Analytics, revenue, and member insights</p>
+                <a href="{% url 'reports' %}" class="btn btn-warning">View Reports</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-bolt fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Quick Actions</h5>
+                <p class="card-text">Fast access to common tasks</p>
+                <a href="{% url 'quick_actions' %}" class="btn btn-info">Quick Actions</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5><i class="fas fa-map-marker-alt"></i> Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Address:</strong><br>
+                        123 Fitness Street<br>
+                        Health City, HC 12345</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Phone:</strong><br>
+                        +91-9876543210<br>
+                        +91-9876543211</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Email:</strong><br>
+                        info@fitlifegym.com<br>
+                        support@fitlifegym.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

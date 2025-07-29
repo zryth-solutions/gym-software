@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & Analytics - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+    <div>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Membership Breakdown -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-users"></i> Membership Breakdown</h5>
+            </div>
+            <div class="card-body">
+                {% if membership_breakdown %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Membership Type</th>
+                                <th>Members</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in membership_breakdown %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-info">{{ membership.membership_type|title }}</span>
+                                </td>
+                                <td>{{ membership.count }}</td>
+                                <td>₹{{ membership.revenue|floatformat:2|default:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No membership data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> Monthly Revenue</h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_revenue %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for revenue in monthly_revenue %}
+                            <tr>
+                                <td>{{ revenue.month|date:"F Y" }}</td>
+                                <td>₹{{ revenue.total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No revenue data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Pending Payments -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5><i class="fas fa-exclamation-triangle"></i> Pending Payments</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_payments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Membership</th>
+                                <th>Amount Due</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in pending_payments %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'member_detail' member.pk %}" class="text-decoration-none">
+                                        {{ member.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ member.get_membership_type_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-danger">₹{{ member.pending_amount }}</span>
+                                </td>
+                                <td>
+                                    <a href="tel:{{ member.mobile_phone }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-phone"></i>
+                                    </a>
+                                    <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination for Pending Payments -->
+                {% if pending_payments.has_other_pages %}
+                <nav aria-label="Pending payments pagination" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        {% if pending_payments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'pending_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}pending_page={{ pending_payments.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ pending_payments.number }} of {{ pending_payments.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if pending_payments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'pending_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}pending_page={{ pending_payments.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <strong>Total Pending: ₹{{ total_pending|floatformat:2 }}</strong>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> No pending payments! All members are up to date.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Memberships -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="fas fa-calendar-times"></i> Expiring Memberships (Next 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                {% if expiring_memberships %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Expiry Date</th>
+                                <th>Days Left</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in expiring_memberships %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'member_detail' member.pk %}" class="text-decoration-none">
+                                        {{ member.name }}
+                                    </a>
+                                </td>
+                                <td>{{ member.expiry_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if member.days_until_expiry <= 0 %}
+                                        <span class="badge bg-danger">EXPIRED</span>
+                                    {% elif member.days_until_expiry <= 7 %}
+                                        <span class="badge bg-warning">{{ member.days_until_expiry }} days</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ member.days_until_expiry }} days</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="tel:{{ member.mobile_phone }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-phone"></i>
+                                    </a>
+                                    <a href="mailto:{{ member.email }}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination for Expiring Memberships -->
+                {% if expiring_memberships.has_other_pages %}
+                <nav aria-label="Expiring memberships pagination" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        {% if expiring_memberships.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'expiring_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}expiring_page={{ expiring_memberships.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ expiring_memberships.number }} of {{ expiring_memberships.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if expiring_memberships.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'expiring_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}expiring_page={{ expiring_memberships.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> No memberships expiring in the next 30 days!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Summary Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h4>{{ membership_breakdown|length }}</h4>
+                                <p>Membership Types</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h4>₹{{ total_revenue|floatformat:0 }}</h4>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body">
+                                <h4>{{ pending_payments|length }}</h4>
+                                <p>Pending Payments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h4>{{ expiring_memberships|length }}</h4>
+                                <p>Expiring Soon</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-download"></i> Export Options</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Generate reports for external use:</p>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-success" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportToPDF() {
+    alert('PDF export functionality can be implemented with libraries like jsPDF or server-side PDF generation.');
+}
+
+function exportToExcel() {
+    alert('Excel export functionality can be implemented with libraries like xlsx or server-side generation.');
+}
+</script>
+
+<style>
+@media print {
+    .btn, .card-header, nav, footer {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Membership Expiry Reminder - {{ gym_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .header { background: #ffc107; color: #212529; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 20px; border-radius: 0 0 8px 8px; }
+        .footer { text-align: center; margin-top: 20px; color: #666; }
+        .alert { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107; }
+        .renewal-info { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .urgent { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Membership Expiry Reminder</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Dear {{ member.name }},</h2>
+            
+            <p>We hope you've been enjoying your fitness journey with {{ gym_name }}!</p>
+            
+            {% if member.is_membership_expired %}
+            <div class="alert urgent">
+                <strong>⚠️ Membership Expired</strong><br>
+                Your gym membership expired on {{ member.expiry_date|date:"F d, Y" }}. Please renew your membership to continue enjoying our facilities and services.
+            </div>
+            {% elif member.days_until_expiry <= 3 %}
+            <div class="alert urgent">
+                <strong>🚨 Urgent: Membership Expiring Soon</strong><br>
+                Your membership will expire in {{ member.days_until_expiry }} day{{ member.days_until_expiry|pluralize }} on {{ member.expiry_date|date:"F d, Y" }}. Don't let your fitness routine be interrupted!
+            </div>
+            {% else %}
+            <div class="alert">
+                <strong>⏰ Membership Expiry Notice</strong><br>
+                Your membership will expire in {{ member.days_until_expiry }} days on {{ member.expiry_date|date:"F d, Y" }}. We wanted to give you a heads up so you can plan your renewal.
+            </div>
+            {% endif %}
+            
+            <div class="renewal-info">
+                <h3>Your Membership Details:</h3>
+                <ul>
+                    <li><strong>Member Name:</strong> {{ member.name }}</li>
+                    <li><strong>Current Plan:</strong> {{ member.get_membership_type_display }}</li>
+                    <li><strong>Member Since:</strong> {{ member.member_since|date:"F d, Y" }}</li>
+                    <li><strong>Expiry Date:</strong> {{ member.expiry_date|date:"F d, Y" }}</li>
+                    {% if member.has_pending_payment %}
+                    <li><strong>Pending Payment:</strong> <span style="color: #dc3545;">₹{{ member.pending_amount }}</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <h3>How to Renew Your Membership:</h3>
+            <ol>
+                <li>💳 Visit our reception desk during gym hours</li>
+                <li>📱 Pay via UPI at the gym</li>
+                <li>💰 Cash payment accepted</li>
+                <li>🏦 Bank transfer (contact us for details)</li>
+                <li>📞 Call us to discuss renewal options</li>
+            </ol>
+            
+            <h3>Benefits of Renewing:</h3>
+            <ul>
+                <li>✅ Continue your fitness journey without interruption</li>
+                <li>✅ Keep access to all gym equipment and facilities</li>
+                <li>✅ Maintain your workout routine and progress</li>
+                <li>✅ Continue enjoying group classes and training sessions</li>
+                <li>✅ Keep your preferred membership rate</li>
+            </ul>
+            
+            {% if member.days_until_expiry <= 7 %}
+            <div class="renewal-info">
+                <h3>Special Renewal Offer:</h3>
+                <p>Renew within the next {{ member.days_until_expiry }} day{{ member.days_until_expiry|pluralize }} and get:</p>
+                <ul>
+                    <li>🎁 1 free personal training session</li>
+                    <li>🥤 Complimentary protein shake</li>
+                    <li>📅 Extended validity from current expiry date</li>
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="renewal-info">
+                <h3>Contact Us:</h3>
+                <p>Questions about renewal? We're here to help:</p>
+                <p><strong>📞 Phone:</strong> {{ gym_phone }}</p>
+                <p><strong>📧 Email:</strong> {{ gym_email }}</p>
+                <p><strong>🏢 Visit Us:</strong> We're available during regular gym hours</p>
+                <p><strong>💬 WhatsApp:</strong> Quick responses on {{ gym_phone }}</p>
+            </div>
+            
+            <p>Don't let your fitness goals take a backseat! Renew your membership today and keep crushing your workouts.</p>
+            
+            <p>We look forward to seeing you at the gym!</p>
+            
+            <p>Best regards,<br>
+            The {{ gym_name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p><small>This reminder was sent to {{ member.email }}. For any questions about your membership, please contact us at {{ gym_email }}.</small></p>
+        </div>
+    </div>
+</body>
+</html> 

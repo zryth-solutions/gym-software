@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Enroll New Member - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="fas fa-user-plus"></i> Enroll New Member</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5>Personal Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.name.id_for_label }}" class="form-label">Full Name *</label>
+                                        {{ form.name }}
+                                        {% if form.name.errors %}
+                                            <div class="text-danger">{{ form.name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.email.id_for_label }}" class="form-label">Email Address *</label>
+                                        {{ form.email }}
+                                        {% if form.email.errors %}
+                                            <div class="text-danger">{{ form.email.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.mobile_phone.id_for_label }}" class="form-label">Mobile Number *</label>
+                                        {{ form.mobile_phone }}
+                                        {% if form.mobile_phone.errors %}
+                                            <div class="text-danger">{{ form.mobile_phone.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth *</label>
+                                        {{ form.date_of_birth }}
+                                        {% if form.date_of_birth.errors %}
+                                            <div class="text-danger">{{ form.date_of_birth.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+                                        {{ form.gender }}
+                                        {% if form.gender.errors %}
+                                            <div class="text-danger">{{ form.gender.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                                        {{ form.profile_picture }}
+                                        {% if form.profile_picture.errors %}
+                                            <div class="text-danger">{{ form.profile_picture.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.member_since.id_for_label }}" class="form-label">Join Date *</label>
+                                        {{ form.member_since }}
+                                        {% if form.member_since.errors %}
+                                            <div class="text-danger">{{ form.member_since.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i> Leave empty to use today's date
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label">Address *</label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger">{{ form.address.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Membership Information -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5>Membership Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.membership_type.id_for_label }}" class="form-label">Membership Type *</label>
+                                        {{ form.membership_type }}
+                                        {% if form.membership_type.errors %}
+                                            <div class="text-danger">{{ form.membership_type.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.payment_type.id_for_label }}" class="form-label">Payment Type</label>
+                                        {{ form.payment_type }}
+                                        {% if form.payment_type.errors %}
+                                            <div class="text-danger">{{ form.payment_type.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.payment_amount.id_for_label }}" class="form-label">Payment Amount (₹) *</label>
+                                        {{ form.payment_amount }}
+                                        {% if form.payment_amount.errors %}
+                                            <div class="text-danger">{{ form.payment_amount.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.pending_amount.id_for_label }}" class="form-label">Pending Amount (₹)</label>
+                                        {{ form.pending_amount }}
+                                        {% if form.pending_amount.errors %}
+                                            <div class="text-danger">{{ form.pending_amount.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'member_list' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enroll Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

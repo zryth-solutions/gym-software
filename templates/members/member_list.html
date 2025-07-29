@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Members List - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users"></i> Members ({{ total_count }})</h2>
+    <a href="{% url 'member_enroll' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Enroll New Member
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-filter"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    {{ form.search }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.membership_type }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.gender }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.expiry_status }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.is_active }}
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        {{ form.has_pending_payment }}
+                        <label class="form-check-label" for="{{ form.has_pending_payment.id_for_label }}">
+                            <i class="fas fa-credit-card me-1"></i>Show members with pending payments
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Members Table -->
+<div class="card">
+    <div class="card-body">
+        {% if members %}
+        <!-- Member Cards -->
+        <div class="row">
+            {% for member in members %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <!-- Member Header -->
+                        <div class="d-flex align-items-center mb-3">
+                            {% if member.profile_picture %}
+                            <img src="{{ member.profile_picture.url }}" alt="{{ member.name }}" 
+                                 class="rounded-circle me-3" width="60" height="60">
+                            {% else %}
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-user text-white fa-lg"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-1">{{ member.name }}</h5>
+                                <p class="text-muted mb-0 small">{{ member.age }} years • {{ member.get_gender_display }}</p>
+                            </div>
+                            <!-- Status Badge -->
+                            {% if member.is_membership_expired %}
+                                <span class="badge bg-danger">EXPIRED</span>
+                            {% elif member.days_until_expiry <= 7 %}
+                                <span class="badge bg-warning">EXPIRING</span>
+                            {% else %}
+                                <span class="badge bg-success">ACTIVE</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Member Info -->
+                        <div class="mb-3">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-envelope me-1"></i>{{ member.email }}
+                                    </small>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-phone me-1"></i>{{ member.mobile_phone }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Membership Info -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <span class="badge bg-info w-100">{{ member.get_membership_type_display }}</span>
+                            </div>
+                            <div class="col-6">
+                                {% if member.has_pending_payment %}
+                                    <span class="badge bg-danger w-100">₹{{ member.pending_amount }} DUE</span>
+                                {% else %}
+                                    <span class="badge bg-success w-100">PAID</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Expiry Info -->
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Expires: {{ member.expiry_date|date:"M d, Y" }}
+                                {% if member.days_until_expiry < 0 %}
+                                    <span class="text-danger">({{ member.days_until_expiry|cut:"-" }} days ago)</span>
+                                {% else %}
+                                    <span class="text-success">({{ member.days_until_expiry }} days left)</span>
+                                {% endif %}
+                            </small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'member_detail' member.pk %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <div class="row g-1">
+                                <div class="col">
+                                    <a href="{% url 'member_edit' member.pk %}" class="btn btn-outline-warning btn-sm w-100">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                                {% if member.has_pending_payment %}
+                                <div class="col">
+                                    <a href="{% url 'add_payment' member.pk %}" class="btn btn-outline-success btn-sm w-100">
+                                        <i class="fas fa-rupee-sign"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <div class="col">
+                                    <a href="tel:{{ member.mobile_phone }}" class="btn btn-outline-info btn-sm w-100">
+                                        <i class="fas fa-phone"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if members.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if members.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ members.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ members.number }} of {{ members.paginator.num_pages }}</span>
+                </li>
+                
+                {% if members.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ members.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ members.paginator.num_pages }}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h4>No members found</h4>
+            <p class="text-muted">Try adjusting your filters or enroll your first member.</p>
+            <a href="{% url 'member_enroll' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Enroll First Member
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

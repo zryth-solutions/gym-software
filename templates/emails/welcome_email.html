@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to {{ gym_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 20px; border-radius: 0 0 8px 8px; }
+        .footer { text-align: center; margin-top: 20px; color: #666; }
+        .highlight { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to {{ gym_name }}!</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Dear {{ member.name }},</h2>
+            
+            <p>Welcome to our fitness family! We're thrilled to have you join {{ gym_name }} and embark on your fitness journey with us.</p>
+            
+            <div class="highlight">
+                <h3>Your Membership Details:</h3>
+                <ul>
+                    <li><strong>Name:</strong> {{ member.name }}</li>
+                    <li><strong>Email:</strong> {{ member.email }}</li>
+                    <li><strong>Membership Type:</strong> {{ member.get_membership_type_display }}</li>
+                    <li><strong>Member Since:</strong> {{ member.member_since|date:"F d, Y" }}</li>
+                    <li><strong>Membership Expires:</strong> {{ member.expiry_date|date:"F d, Y" }}</li>
+                </ul>
+            </div>
+            
+            <h3>What's Included in Your Membership:</h3>
+            <ul>
+                <li>🏋️‍♂️ Access to state-of-the-art equipment</li>
+                <li>🏃‍♀️ Group fitness classes</li>
+                <li>💪 Personal training consultations</li>
+                <li>🥗 Nutrition guidance</li>
+                <li>🕒 Flexible gym hours</li>
+                <li>📱 Mobile app access</li>
+            </ul>
+            
+            <h3>Getting Started:</h3>
+            <ol>
+                <li>Visit our facility during operating hours</li>
+                <li>Bring a valid photo ID for verification</li>
+                <li>Get a tour and familiarize yourself with our equipment</li>
+                <li>Attend our free orientation session</li>
+                <li>Download our mobile app for easy access</li>
+            </ol>
+            
+            <div class="highlight">
+                <h3>Contact Information:</h3>
+                <p><strong>Address:</strong> {{ gym_address }}</p>
+                <p><strong>Phone:</strong> {{ gym_phone }}</p>
+                <p><strong>Email:</strong> {{ gym_email }}</p>
+            </div>
+            
+            <p>Our friendly staff is always available to help you achieve your fitness goals. Don't hesitate to reach out if you have any questions!</p>
+            
+            <p>Let's get fit together!</p>
+            
+            <p>Best regards,<br>
+            The {{ gym_name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p><small>This email was sent to {{ member.email }}. If you have any questions, please contact us at {{ gym_email }}.</small></p>
+        </div>
+    </div>
+</body>
+</html> 

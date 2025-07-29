@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ member.name }} - Member Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-user"></i> {{ member.name }}
+        {% if member.is_membership_expired %}
+            <span class="badge bg-danger ms-2">EXPIRED</span>
+        {% elif member.days_until_expiry <= 7 %}
+            <span class="badge bg-warning ms-2">EXPIRING SOON</span>
+        {% else %}
+            <span class="badge bg-success ms-2">ACTIVE</span>
+        {% endif %}
+    </h2>
+    <div>
+        <a href="{% url 'member_edit' member.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Member
+        </a>
+        <a href="{% url 'member_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Member Information -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="30%">Full Name:</th>
+                                <td>{{ member.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td><a href="mailto:{{ member.email }}">{{ member.email }}</a></td>
+                            </tr>
+                            <tr>
+                                <th>Mobile:</th>
+                                <td><a href="tel:{{ member.mobile_phone }}">{{ member.mobile_phone }}</a></td>
+                            </tr>
+                            <tr>
+                                <th>Date of Birth:</th>
+                                <td>{{ member.date_of_birth|date:"F d, Y" }} ({{ member.age }} years old)</td>
+                            </tr>
+                            <tr>
+                                <th>Gender:</th>
+                                <td>{{ member.get_gender_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>Address:</th>
+                                <td>{{ member.address }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        {% if member.profile_picture %}
+                            <img src="{{ member.profile_picture.url }}" alt="{{ member.name }}" 
+                                 class="img-fluid rounded-circle" style="max-width: 150px;">
+                        {% else %}
+                            <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 150px; height: 150px;">
+                                <i class="fas fa-user fa-4x text-white"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Membership Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-id-card"></i> Membership Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="30%">Member Since:</th>
+                        <td>{{ member.member_since|date:"F d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Membership Type:</th>
+                        <td><span class="badge bg-info">{{ member.get_membership_type_display }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Expiry Date:</th>
+                        <td>
+                            {{ member.expiry_date|date:"F d, Y" }}
+                            {% if member.is_membership_expired %}
+                                <span class="text-danger">(Expired {{ member.days_until_expiry|cut:"-" }} days ago)</span>
+                            {% else %}
+                                <span class="text-success">({{ member.days_until_expiry }} days remaining)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if member.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history"></i> Payment History</h5>
+                {% if member.has_pending_payment %}
+                <a href="{% url 'add_payment' member.pk %}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus"></i> Add Payment
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if payment_history %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Payment Type</th>
+                                <th>Transaction ID</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payment_history %}
+                            <tr>
+                                <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                <td>₹{{ payment.amount }}</td>
+                                <td><span class="badge bg-primary">{{ payment.get_payment_type_display }}</span></td>
+                                <td>{{ payment.transaction_id|default:"-" }}</td>
+                                <td>{{ payment.notes|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination for Payment History -->
+                {% if payment_history.has_other_pages %}
+                <nav aria-label="Payment history pagination" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        {% if payment_history.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'payment_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}payment_page={{ payment_history.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ payment_history.number }} of {{ payment_history.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if payment_history.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'payment_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}payment_page={{ payment_history.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <p class="text-muted">No payment history available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-calculator"></i> Payment Summary</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Total Amount:</th>
+                        <td class="text-end">₹{{ member.payment_amount }}</td>
+                    </tr>
+                    <tr>
+                        <th>Pending Amount:</th>
+                        <td class="text-end">
+                            {% if member.has_pending_payment %}
+                                <span class="text-danger">₹{{ member.pending_amount }}</span>
+                            {% else %}
+                                <span class="text-success">₹0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Payment Method:</th>
+                        <td class="text-end">{{ member.get_payment_type_display }}</td>
+                    </tr>
+                </table>
+                
+                {% if member.has_pending_payment %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Payment Due!</strong><br>
+                    ₹{{ member.pending_amount }} pending payment.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'member_edit' member.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Member
+                    </a>
+                    {% if member.has_pending_payment %}
+                    <a href="{% url 'add_payment' member.pk %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Payment
+                    </a>
+                    {% endif %}
+                    <a href="mailto:{{ member.email }}" class="btn btn-info">
+                        <i class="fas fa-envelope"></i> Send Email
+                    </a>
+                    <a href="tel:{{ member.mobile_phone }}" class="btn btn-secondary">
+                        <i class="fas fa-phone"></i> Call Member
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

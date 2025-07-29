@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Payment - {{ member.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3><i class="fas fa-plus"></i> Add Payment for {{ member.name }}</h3>
+            </div>
+            <div class="card-body">
+                <!-- Member Info -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Member Information</h6>
+                    <ul class="mb-0">
+                        <li><strong>Name:</strong> {{ member.name }}</li>
+                        <li><strong>Membership:</strong> {{ member.get_membership_type_display }}</li>
+                        <li><strong>Pending Amount:</strong> ₹{{ member.pending_amount }}</li>
+                        <li><strong>Expiry Date:</strong> {{ member.expiry_date|date:"F d, Y" }}</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Payment Amount (₹) *</label>
+                        <input type="number" class="form-control" id="amount" name="amount" 
+                               step="0.01" min="0" max="{{ member.pending_amount }}" 
+                               value="{{ member.pending_amount }}" required>
+                        <small class="form-text text-muted">
+                            Maximum: ₹{{ member.pending_amount }} (pending amount)
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_type" class="form-label">Payment Method *</label>
+                        <select class="form-control" id="payment_type" name="payment_type" required>
+                            <option value="">Select Payment Method</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="transaction_id" class="form-label">Transaction ID</label>
+                        <input type="text" class="form-control" id="transaction_id" name="transaction_id" 
+                               placeholder="Optional - for card/UPI transactions">
+                        <small class="form-text text-muted">
+                            Provide transaction reference for digital payments
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Optional - any additional notes about this payment"></textarea>
+                    </div>
+                    
+                    <!-- Payment Summary -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6>Payment Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless mb-0">
+                                <tr>
+                                    <th>Current Pending:</th>
+                                    <td class="text-end">₹{{ member.pending_amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Amount:</th>
+                                    <td class="text-end" id="payment-amount-display">₹{{ member.pending_amount }}</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <th>Remaining Balance:</th>
+                                    <td class="text-end" id="remaining-balance">₹0.00</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'member_detail' member.pk %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Record Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const paymentAmountDisplay = document.getElementById('payment-amount-display');
+    const remainingBalance = document.getElementById('remaining-balance');
+    const pendingAmount = {{ member.pending_amount }};
+    
+    function updateSummary() {
+        const paymentAmount = parseFloat(amountInput.value) || 0;
+        const remaining = Math.max(0, pendingAmount - paymentAmount);
+        
+        paymentAmountDisplay.textContent = '₹' + paymentAmount.toFixed(2);
+        remainingBalance.textContent = '₹' + remaining.toFixed(2);
+        
+        // Update color based on remaining balance
+        const row = remainingBalance.closest('tr');
+        row.className = remaining === 0 ? 'table-success' : 'table-warning';
+    }
+    
+    amountInput.addEventListener('input', updateSummary);
+    updateSummary(); // Initial calculation
+});
+</script>
+{% endblock %} 
