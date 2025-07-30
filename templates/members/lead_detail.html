@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Lead Details - {{ lead.name }} - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user-cog"></i> Lead Details</h2>
+    <div>
+        <a href="{% url 'lead_list' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Leads
+        </a>
+        {% if lead.status != 'converted' %}
+        <a href="{% url 'convert_lead' lead.pk %}" class="btn btn-success">
+            <i class="fas fa-user-check"></i> Convert to Member
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Lead Information Card -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user"></i> Lead Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-user text-white fa-2x"></i>
+                    </div>
+                    <h4 class="mt-2 mb-1">{{ lead.name }}</h4>
+                    <span class="badge 
+                        {% if lead.status == 'new' %}bg-primary
+                        {% elif lead.status == 'contacted' %}bg-warning  
+                        {% elif lead.status == 'interested' %}bg-info
+                        {% elif lead.status == 'converted' %}bg-success
+                        {% else %}bg-secondary{% endif %} fs-6">
+                        {{ lead.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <strong><i class="fas fa-phone me-2"></i>Phone:</strong>
+                        <a href="tel:{{ lead.phone }}" class="text-decoration-none">{{ lead.phone }}</a>
+                    </div>
+                    {% if lead.email %}
+                    <div class="col-12">
+                        <strong><i class="fas fa-envelope me-2"></i>Email:</strong>
+                        <a href="mailto:{{ lead.email }}" class="text-decoration-none">{{ lead.email }}</a>
+                    </div>
+                    {% endif %}
+                    <div class="col-12">
+                        <strong><i class="fas fa-map-marker-alt me-2"></i>Source:</strong>
+                        {{ lead.get_source_display }}
+                    </div>
+                    <div class="col-12">
+                        <strong><i class="fas fa-star me-2"></i>Interest Level:</strong>
+                        <span class="badge 
+                            {% if lead.interest_level >= 8 %}bg-success
+                            {% elif lead.interest_level >= 5 %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                            {{ lead.interest_level }}/10
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong><i class="fas fa-calendar-plus me-2"></i>Created:</strong>
+                    <span class="text-muted">{{ lead.created_at|date:"M d, Y g:i A" }}</span>
+                    <small class="text-muted d-block">({{ lead.days_since_created }} days ago)</small>
+                </div>
+
+                {% if lead.last_contacted %}
+                <div class="mb-3">
+                    <strong><i class="fas fa-phone-alt me-2"></i>Last Contacted:</strong>
+                    <span class="text-muted">{{ lead.last_contacted|date:"M d, Y g:i A" }}</span>
+                </div>
+                {% endif %}
+
+                {% if lead.next_follow_up %}
+                <div class="mb-3">
+                    <strong><i class="fas fa-calendar me-2"></i>Next Follow-up:</strong>
+                    <span class="{% if lead.is_overdue_follow_up %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                        {{ lead.next_follow_up|date:"M d, Y" }}
+                        {% if lead.is_overdue_follow_up %}(OVERDUE){% endif %}
+                    </span>
+                </div>
+                {% endif %}
+
+                {% if lead.converted_member %}
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Converted!</strong><br>
+                    <small>Member: <a href="{% url 'member_detail' lead.converted_member.pk %}">{{ lead.converted_member.name }}</a></small><br>
+                    <small>Date: {{ lead.conversion_date|date:"M d, Y" }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Form -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit"></i> Update Lead</h5>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">Phone</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.source.id_for_label }}" class="form-label">Source</label>
+                            {{ form.source }}
+                            {% if form.source.errors %}
+                                <div class="invalid-feedback d-block">{{ form.source.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.interest_level.id_for_label }}" class="form-label">Interest Level (1-10)</label>
+                            {{ form.interest_level }}
+                            {% if form.interest_level.errors %}
+                                <div class="invalid-feedback d-block">{{ form.interest_level.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.next_follow_up.id_for_label }}" class="form-label">Next Follow-up Date</label>
+                        {{ form.next_follow_up }}
+                        {% if form.next_follow_up.errors %}
+                            <div class="invalid-feedback d-block">{{ form.next_follow_up.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Update Lead
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Status Update -->
+{% if lead.status != 'converted' %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Status Update</h6>
+            </div>
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    {% for status_code, status_display in lead.STATUS_CHOICES %}
+                    {% if status_code != lead.status and status_code != 'converted' %}
+                    <button type="button" class="btn btn-outline-secondary" 
+                            onclick="updateStatus('{{ status_code }}', '{{ status_display }}')">
+                        {{ status_display }}
+                    </button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function updateStatus(statusCode, statusDisplay) {
+    if (confirm(`Mark lead as "${statusDisplay}"?`)) {
+        const formData = new FormData();
+        formData.append('status', statusCode);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch("{% url 'lead_update_status' lead.pk %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating status: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating status. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

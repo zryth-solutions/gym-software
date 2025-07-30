@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Leads Management - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users-cog"></i> Leads Management ({{ total_count }})</h2>
+    <div>
+        <a href="{% url 'lead_capture' %}" class="btn btn-success me-2" target="_blank">
+            <i class="fas fa-user-plus"></i> Quick Capture
+        </a>
+        <a href="{% url 'member_enroll' %}" class="btn btn-primary">
+            <i class="fas fa-user-check"></i> Enroll Member
+        </a>
+    </div>
+</div>
+
+<!-- Lead Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4>{{ total_leads }}</h4>
+                <small class="text-muted">Total Leads</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user-plus fa-2x text-warning mb-2"></i>
+                <h4>{{ new_leads }}</h4>
+                <small class="text-muted">New Leads</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user-check fa-2x text-success mb-2"></i>
+                <h4>{{ converted_leads }}</h4>
+                <small class="text-muted">Converted</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                <h4>{{ conversion_rate }}%</h4>
+                <small class="text-muted">Conversion Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-filter"></i> Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    {{ form.search }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.status }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.source }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.interest_level }}
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mt-2">
+                        {{ form.overdue_follow_up }}
+                        <label class="form-check-label" for="{{ form.overdue_follow_up.id_for_label }}">
+                            Overdue Follow-ups
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads List -->
+<div class="card">
+    <div class="card-body">
+        {% if leads %}
+        <div class="row">
+            {% for lead in leads %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm border-start border-4 
+                    {% if lead.status == 'new' %}border-primary
+                    {% elif lead.status == 'contacted' %}border-warning  
+                    {% elif lead.status == 'interested' %}border-info
+                    {% elif lead.status == 'converted' %}border-success
+                    {% else %}border-secondary{% endif %}">
+                    <div class="card-body">
+                        <!-- Lead Header -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ lead.name }}</h5>
+                                <p class="text-muted mb-0 small">
+                                    <i class="fas fa-clock me-1"></i>{{ lead.days_since_created }} days ago
+                                </p>
+                            </div>
+                            <!-- Status Badge -->
+                            <span class="badge 
+                                {% if lead.status == 'new' %}bg-primary
+                                {% elif lead.status == 'contacted' %}bg-warning  
+                                {% elif lead.status == 'interested' %}bg-info
+                                {% elif lead.status == 'converted' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ lead.get_status_display }}
+                            </span>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="mb-3">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-phone me-1"></i>{{ lead.phone }}
+                                    </small>
+                                </div>
+                                {% if lead.email %}
+                                <div class="col-12">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-envelope me-1"></i>{{ lead.email }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Lead Info -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <span class="badge bg-light text-dark w-100">{{ lead.get_source_display }}</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="badge 
+                                    {% if lead.interest_level >= 8 %}bg-success
+                                    {% elif lead.interest_level >= 5 %}bg-warning
+                                    {% else %}bg-danger{% endif %} w-100">
+                                    Interest: {{ lead.interest_level }}/10
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Follow-up Info -->
+                        {% if lead.next_follow_up %}
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Next follow-up: {{ lead.next_follow_up|date:"M d, Y" }}
+                                {% if lead.is_overdue_follow_up %}
+                                    <span class="text-danger fw-bold">(OVERDUE)</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Notes Preview -->
+                        {% if lead.notes %}
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-comment me-1"></i>
+                                {{ lead.notes|truncatechars:50 }}
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'lead_detail' lead.pk %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            <div class="row g-1">
+                                {% if lead.status != 'converted' %}
+                                <div class="col">
+                                    <a href="{% url 'convert_lead' lead.pk %}" class="btn btn-outline-success btn-sm w-100">
+                                        <i class="fas fa-user-check"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <div class="col">
+                                    <a href="tel:{{ lead.phone }}" class="btn btn-outline-info btn-sm w-100">
+                                        <i class="fas fa-phone"></i>
+                                    </a>
+                                </div>
+                                {% if lead.email %}
+                                <div class="col">
+                                    <a href="mailto:{{ lead.email }}" class="btn btn-outline-warning btn-sm w-100">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if leads.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if leads.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ leads.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ leads.number }} of {{ leads.paginator.num_pages }}</span>
+                </li>
+                
+                {% if leads.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ leads.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ leads.paginator.num_pages }}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users-cog fa-3x text-muted mb-3"></i>
+            <h4>No leads found</h4>
+            <p class="text-muted">Try adjusting your filters or capture your first lead.</p>
+            <a href="{% url 'lead_capture' %}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-user-plus"></i> Capture First Lead
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

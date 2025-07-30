@@ -6,8 +6,9 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum
 from datetime import date, timedelta
-from .models import Member, PaymentHistory
-from .forms import MemberForm, MemberFilterForm
+from django.utils import timezone
+from .models import Member, PaymentHistory, Lead
+from .forms import MemberForm, MemberFilterForm, LeadCaptureForm, LeadFilterForm, LeadUpdateForm
 from .tasks import send_welcome_email
 
 
@@ -71,6 +72,14 @@ def dashboard(request):
         count=Count('id')
     ).order_by('membership_type')
     
+    # Lead statistics
+    total_leads = Lead.objects.count()
+    new_leads = Lead.objects.filter(status='new').count()
+    converted_leads = Lead.objects.filter(status='converted').count()
+    leads_this_week = Lead.objects.filter(
+        created_at__gte=date.today() - timedelta(days=7)
+    ).count()
+    
     # Quick stats for cards
     stats = {
         'total_members': total_members,
@@ -85,6 +94,10 @@ def dashboard(request):
             total=Sum('payment_amount')
         )['total'] or 0,
         'pending_count': Member.objects.filter(pending_amount__gt=0).count(),
+        'total_leads': total_leads,
+        'new_leads': new_leads,
+        'converted_leads': converted_leads,
+        'leads_this_week': leads_this_week,
     }
     
     context = {
@@ -342,3 +355,183 @@ def quick_actions(request):
     }
     
     return render(request, 'members/quick_actions.html', context)
+
+
+# ======= LEAD MANAGEMENT VIEWS =======
+
+def lead_capture(request):
+    """Quick lead capture form for visitors (no login required)"""
+    if request.method == 'POST':
+        form = LeadCaptureForm(request.POST)
+        if form.is_valid():
+            lead = form.save()
+            messages.success(
+                request, 
+                f'Thank you {lead.name}! We have captured your information and will contact you soon.'
+            )
+            # Reset form for next visitor
+            form = LeadCaptureForm()
+    else:
+        form = LeadCaptureForm()
+    
+    return render(request, 'members/lead_capture.html', {'form': form})
+
+
+@login_required
+def lead_list(request):
+    """List all leads with filtering options"""
+    form = LeadFilterForm(request.GET)
+    leads = Lead.objects.all().order_by('-created_at')
+    
+    # Apply filters
+    if form.is_valid():
+        if form.cleaned_data['search']:
+            search_term = form.cleaned_data['search']
+            leads = leads.filter(
+                Q(name__icontains=search_term) |
+                Q(phone__icontains=search_term) |
+                Q(email__icontains=search_term)
+            )
+        
+        if form.cleaned_data['status']:
+            leads = leads.filter(status=form.cleaned_data['status'])
+        
+        if form.cleaned_data['source']:
+            leads = leads.filter(source=form.cleaned_data['source'])
+        
+        if form.cleaned_data['interest_level']:
+            level = form.cleaned_data['interest_level']
+            if level == 'high':
+                leads = leads.filter(interest_level__gte=8)
+            elif level == 'medium':
+                leads = leads.filter(interest_level__gte=5, interest_level__lt=8)
+            elif level == 'low':
+                leads = leads.filter(interest_level__lt=5)
+        
+        if form.cleaned_data['overdue_follow_up']:
+            leads = leads.filter(
+                next_follow_up__lt=date.today(),
+                status__in=['new', 'contacted', 'interested']
+            )
+    
+    # Pagination
+    paginator = Paginator(leads, 12)  # 12 leads per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Lead statistics
+    total_leads = Lead.objects.count()
+    new_leads = Lead.objects.filter(status='new').count()
+    converted_leads = Lead.objects.filter(status='converted').count()
+    conversion_rate = (converted_leads / total_leads * 100) if total_leads > 0 else 0
+    
+    context = {
+        'form': form,
+        'leads': page_obj,
+        'total_count': leads.count(),
+        'total_leads': total_leads,
+        'new_leads': new_leads,
+        'converted_leads': converted_leads,
+        'conversion_rate': round(conversion_rate, 1),
+    }
+    
+    return render(request, 'members/lead_list.html', context)
+
+
+@login_required
+def lead_detail(request, pk):
+    """View and update lead details"""
+    lead = get_object_or_404(Lead, pk=pk)
+    
+    if request.method == 'POST':
+        form = LeadUpdateForm(request.POST, instance=lead)
+        if form.is_valid():
+            updated_lead = form.save()
+            # Update last_contacted if status changed to contacted
+            if updated_lead.status == 'contacted' and not updated_lead.last_contacted:
+                updated_lead.last_contacted = timezone.now()
+                updated_lead.save()
+            
+            messages.success(request, f'Lead {lead.name} updated successfully!')
+            return redirect('lead_detail', pk=lead.pk)
+    else:
+        form = LeadUpdateForm(instance=lead)
+    
+    context = {
+        'lead': lead,
+        'form': form,
+    }
+    
+    return render(request, 'members/lead_detail.html', context)
+
+
+@login_required
+def convert_lead(request, pk):
+    """Convert a lead to a member"""
+    lead = get_object_or_404(Lead, pk=pk)
+    
+    if request.method == 'POST':
+        # Pre-fill member form with lead data
+        initial_data = {
+            'name': lead.name,
+            'mobile_phone': lead.phone,
+            'email': lead.email or '',
+            'member_since': date.today(),
+        }
+        
+        member_form = MemberForm(request.POST, request.FILES, initial=initial_data)
+        if member_form.is_valid():
+            member = member_form.save()
+            
+            # Mark lead as converted
+            lead.mark_converted(member)
+            
+            # Send welcome email
+            try:
+                send_welcome_email.delay(member.id)
+            except Exception:
+                pass
+            
+            messages.success(
+                request, 
+                f'🎉 Lead {lead.name} converted to member successfully! Welcome to The Fit Forge Gym.'
+            )
+            return redirect('member_detail', pk=member.pk)
+    else:
+        # Pre-fill the form with lead data
+        initial_data = {
+            'name': lead.name,
+            'mobile_phone': lead.phone,
+            'email': lead.email or '',
+            'member_since': date.today(),
+        }
+        member_form = MemberForm(initial=initial_data)
+    
+    context = {
+        'lead': lead,
+        'form': member_form,
+    }
+    
+    return render(request, 'members/convert_lead.html', context)
+
+
+@login_required
+def lead_quick_update_status(request, pk):
+    """Quick AJAX endpoint to update lead status"""
+    if request.method == 'POST':
+        lead = get_object_or_404(Lead, pk=pk)
+        new_status = request.POST.get('status')
+        
+        if new_status in [choice[0] for choice in Lead.STATUS_CHOICES]:
+            lead.status = new_status
+            if new_status == 'contacted':
+                lead.last_contacted = timezone.now()
+            lead.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Lead status updated to {lead.get_status_display()}',
+                'new_status': lead.get_status_display()
+            })
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'})

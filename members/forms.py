@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
-from .models import Member
+from .models import Member, Lead
 
 
 class MemberForm(forms.ModelForm):
@@ -161,4 +161,125 @@ class PaymentForm(forms.Form):
         amount = self.cleaned_data['amount']
         if amount <= 0:
             raise ValidationError("Payment amount must be greater than 0.")
-        return amount 
+        return amount
+
+
+class LeadCaptureForm(forms.ModelForm):
+    """Quick form for capturing visitor information"""
+    
+    class Meta:
+        model = Lead
+        fields = ['name', 'phone', 'email', 'source', 'interest_level', 'notes']
+        
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Visitor Name',
+                'required': True
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Phone Number',
+                'required': True
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email (Optional)'
+            }),
+            'source': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'interest_level': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'max': 10,
+                'value': 5
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes about the visitor...'
+            })
+        }
+    
+    def clean_interest_level(self):
+        interest = self.cleaned_data['interest_level']
+        if interest < 1 or interest > 10:
+            raise ValidationError("Interest level must be between 1 and 10.")
+        return interest
+
+
+class LeadFilterForm(forms.Form):
+    """Form for filtering leads list"""
+    
+    search = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search by name, phone, or email...'
+        })
+    )
+    
+    status = forms.ChoiceField(
+        choices=[('', 'All Status')] + Lead.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    source = forms.ChoiceField(
+        choices=[('', 'All Sources')] + Lead.SOURCE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    interest_level = forms.ChoiceField(
+        choices=[
+            ('', 'All Levels'),
+            ('high', 'High (8-10)'),
+            ('medium', 'Medium (5-7)'),
+            ('low', 'Low (1-4)'),
+        ],
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    overdue_follow_up = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+
+class LeadUpdateForm(forms.ModelForm):
+    """Form for updating lead information and status"""
+    
+    class Meta:
+        model = Lead
+        fields = [
+            'name', 'phone', 'email', 'status', 'source', 'interest_level', 
+            'notes', 'next_follow_up'
+        ]
+        
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'source': forms.Select(attrs={'class': 'form-control'}),
+            'interest_level': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'max': 10
+            }),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'next_follow_up': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            })
+        }
+    
+    def clean_interest_level(self):
+        interest = self.cleaned_data['interest_level']
+        if interest < 1 or interest > 10:
+            raise ValidationError("Interest level must be between 1 and 10.")
+        return interest 

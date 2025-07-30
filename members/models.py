@@ -126,3 +126,92 @@ class PaymentHistory(models.Model):
     
     def __str__(self):
         return f"{self.member.name} - ₹{self.amount} - {self.payment_date.strftime('%Y-%m-%d')}"
+
+
+class Lead(models.Model):
+    """Lead model for potential gym members - visitor funnel management"""
+    
+    STATUS_CHOICES = [
+        ('new', 'New Lead'),
+        ('contacted', 'Contacted'),
+        ('interested', 'Interested'),
+        ('converted', 'Converted'),
+        ('not_interested', 'Not Interested'),
+    ]
+    
+    SOURCE_CHOICES = [
+        ('walk_in', 'Walk-in'),
+        ('referral', 'Referral'),
+        ('online', 'Online'),
+        ('advertisement', 'Advertisement'),
+        ('social_media', 'Social Media'),
+        ('other', 'Other'),
+    ]
+    
+    # Basic contact information
+    name = models.CharField(max_length=100, help_text="Full name of the visitor")
+    phone = models.CharField(
+        max_length=15,
+        validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')],
+        help_text="Contact number"
+    )
+    email = models.EmailField(blank=True, null=True, help_text="Email address (optional)")
+    
+    # Lead information
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='walk_in')
+    interest_level = models.IntegerField(
+        default=5,
+        help_text="Interest level from 1-10 (10 being highest)"
+    )
+    
+    # Follow-up and notes
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the lead")
+    last_contacted = models.DateTimeField(blank=True, null=True)
+    next_follow_up = models.DateField(blank=True, null=True, help_text="Next follow-up date")
+    
+    # Conversion tracking
+    converted_member = models.ForeignKey(
+        Member, 
+        on_delete=models.SET_NULL, 
+        blank=True, 
+        null=True,
+        help_text="If converted, link to the member record"
+    )
+    conversion_date = models.DateTimeField(blank=True, null=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Lead"
+        verbose_name_plural = "Leads"
+    
+    def __str__(self):
+        return f"{self.name} - {self.get_status_display()}"
+    
+    @property
+    def is_converted(self):
+        """Check if lead has been converted to member"""
+        return self.status == 'converted' and self.converted_member is not None
+    
+    @property
+    def days_since_created(self):
+        """Calculate days since lead was created"""
+        return (timezone.now() - self.created_at).days
+    
+    @property
+    def is_overdue_follow_up(self):
+        """Check if follow-up is overdue"""
+        if not self.next_follow_up:
+            return False
+        return date.today() > self.next_follow_up
+    
+    def mark_converted(self, member):
+        """Mark lead as converted and link to member"""
+        self.status = 'converted'
+        self.converted_member = member
+        self.conversion_date = timezone.now()
+        self.save()

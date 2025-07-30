@@ -41,6 +41,11 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'member_enroll' %}active{% endif %}" href="{% url 'member_enroll' %}">Enroll Member</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'lead_list' %}active{% endif %}" href="{% url 'lead_list' %}">
+                            <i class="fas fa-users-cog"></i> Leads
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">Reports</a>
                     </li>
                     {% endif %}
@@ -60,6 +65,9 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'dashboard' %}">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'lead_capture' %}" target="_blank">
+                                <i class="fas fa-user-plus me-2"></i>Quick Lead Capture
                             </a></li>
                             <li><a class="dropdown-item" href="/admin/">
                                 <i class="fas fa-cog me-2"></i>Admin Panel

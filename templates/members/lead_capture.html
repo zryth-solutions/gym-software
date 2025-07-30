@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Visitor Information - The Fit Forge Gym{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h3><i class="fas fa-user-plus"></i> Visitor Information</h3>
+                <p class="mb-0">Quick form to capture your details</p>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-user me-1"></i>Your Name *
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-phone me-1"></i>Phone Number *
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-envelope me-1"></i>Email Address
+                        </label>
+                        {{ form.email }}
+                        <small class="form-text text-muted">Optional - for sending gym updates</small>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.source.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-map-marker-alt me-1"></i>How did you find us?
+                        </label>
+                        {{ form.source }}
+                        {% if form.source.errors %}
+                            <div class="invalid-feedback d-block">{{ form.source.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.interest_level.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-star me-1"></i>Interest Level (1-10)
+                        </label>
+                        {{ form.interest_level }}
+                        <small class="form-text text-muted">10 = Very interested, 1 = Just looking</small>
+                        {% if form.interest_level.errors %}
+                            <div class="invalid-feedback d-block">{{ form.interest_level.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-comment me-1"></i>Additional Notes
+                        </label>
+                        {{ form.notes }}
+                        <small class="form-text text-muted">Any specific questions or requirements?</small>
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Information
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Your information is safe with us and will only be used to contact you about our gym services.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 15px;
+}
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+.form-control-lg {
+    font-size: 1.1rem;
+    padding: 12px 16px;
+}
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
