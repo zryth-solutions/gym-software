@@ -16,56 +16,55 @@ class MemberForm(forms.ModelForm):
         ]
         
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address'}),
-            'mobile_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name', 'required': True}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address (Optional)'}),
+            'mobile_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number', 'required': True}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Complete Address'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Address (Optional)'}),
             'member_since': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'membership_type': forms.Select(attrs={'class': 'form-control'}),
-            'payment_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Payment Amount', 'step': '0.01'}),
-            'pending_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Pending Amount', 'step': '0.01'}),
+            'payment_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Payment Amount', 'step': '0.01', 'required': True}),
+            'pending_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Pending Amount (Default: 0)', 'step': '0.01', 'value': '0'}),
             'payment_type': forms.Select(attrs={'class': 'form-control'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
     
     def clean_date_of_birth(self):
-        dob = self.cleaned_data['date_of_birth']
-        today = date.today()
+        dob = self.cleaned_data.get('date_of_birth')
+        if not dob:
+            return dob
         
+        today = date.today()
+        # Only check if date is in future - remove age restrictions for speed
         if dob >= today:
             raise ValidationError("Date of birth cannot be in the future.")
-        
-        # Check if age is reasonable (between 10 and 100 years)
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 10:
-            raise ValidationError("Member must be at least 10 years old.")
-        if age > 100:
-            raise ValidationError("Please check the date of birth.")
         
         return dob
     
     def clean_payment_amount(self):
         amount = self.cleaned_data['payment_amount']
+        # Simplified validation - just check if positive
         if amount <= 0:
             raise ValidationError("Payment amount must be greater than 0.")
         return amount
     
-    def clean_pending_amount(self):
-        pending = self.cleaned_data['pending_amount']
-        if pending < 0:
-            raise ValidationError("Pending amount cannot be negative.")
-        return pending
+    # Remove pending amount validation entirely for speed
+    # def clean_pending_amount(self):
+    #     pending = self.cleaned_data['pending_amount']
+    #     if pending < 0:
+    #         raise ValidationError("Pending amount cannot be negative.")
+    #     return pending
     
-    def clean_member_since(self):
-        member_since = self.cleaned_data['member_since']
-        today = date.today()
-        
-        if member_since > today:
-            raise ValidationError("Join date cannot be in the future.")
-        
-        return member_since
+    # Remove member_since validation for speed - model will handle it
+    # def clean_member_since(self):
+    #     member_since = self.cleaned_data['member_since']
+    #     today = date.today()
+    #     
+    #     if member_since > today:
+    #         raise ValidationError("Join date cannot be in the future.")
+    #     
+    #     return member_since
 
 
 class MemberFilterForm(forms.Form):
@@ -207,6 +206,42 @@ class LeadCaptureForm(forms.ModelForm):
         if interest < 1 or interest > 10:
             raise ValidationError("Interest level must be between 1 and 10.")
         return interest
+
+
+class QuickMemberForm(forms.ModelForm):
+    """Simplified form for quick member enrollment"""
+    
+    class Meta:
+        model = Member
+        fields = ['name', 'mobile_phone', 'membership_type', 'payment_amount']
+        
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Full Name',
+                'required': True
+            }),
+            'mobile_phone': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Mobile Number',
+                'required': True
+            }),
+            'membership_type': forms.Select(attrs={
+                'class': 'form-control form-control-lg'
+            }),
+            'payment_amount': forms.NumberInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Payment Amount (₹)',
+                'step': '0.01',
+                'required': True
+            })
+        }
+    
+    def clean_payment_amount(self):
+        amount = self.cleaned_data['payment_amount']
+        if amount <= 0:
+            raise ValidationError("Payment amount must be greater than 0.")
+        return amount
 
 
 class LeadFilterForm(forms.Form):

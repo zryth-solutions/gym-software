@@ -27,15 +27,14 @@ class Member(models.Model):
     
     # Personal Information
     name = models.CharField(max_length=100, help_text="Full name of the member")
-    email = models.EmailField(unique=True, help_text="Email address for communication")
+    email = models.EmailField(unique=True, blank=True, null=True, help_text="Email address for communication (optional)")
     mobile_phone = models.CharField(
         max_length=15,
-        validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')],
         help_text="Contact number"
     )
-    date_of_birth = models.DateField(help_text="Date of birth")
+    date_of_birth = models.DateField(blank=True, null=True, help_text="Date of birth (optional)")
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
-    address = models.TextField(help_text="Complete address")
+    address = models.TextField(blank=True, help_text="Complete address (optional)")
     
     # Membership Information
     member_since = models.DateField(default=date.today, help_text="Date when member joined")
@@ -66,6 +65,8 @@ class Member(models.Model):
     @property
     def age(self):
         """Calculate age from date of birth"""
+        if not self.date_of_birth:
+            return None
         today = date.today()
         return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
     

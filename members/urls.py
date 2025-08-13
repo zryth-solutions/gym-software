@@ -10,6 +10,7 @@ urlpatterns = [
     # Member management
     path('members/', views.member_list, name='member_list'),
     path('members/enroll/', views.member_enroll, name='member_enroll'),
+    path('members/quick-enroll/', views.quick_member_enroll, name='quick_member_enroll'),
     path('members/<int:pk>/', views.member_detail, name='member_detail'),
     path('members/<int:pk>/edit/', views.member_edit, name='member_edit'),
     path('members/<int:pk>/payment/', views.add_payment, name='add_payment'),

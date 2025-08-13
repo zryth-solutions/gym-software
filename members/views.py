@@ -5,10 +5,11 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum
+from django.db import transaction
 from datetime import date, timedelta
 from django.utils import timezone
 from .models import Member, PaymentHistory, Lead
-from .forms import MemberForm, MemberFilterForm, LeadCaptureForm, LeadFilterForm, LeadUpdateForm
+from .forms import MemberForm, MemberFilterForm, LeadCaptureForm, LeadFilterForm, LeadUpdateForm, QuickMemberForm
 from .tasks import send_welcome_email
 
 
@@ -179,25 +180,57 @@ def member_enroll(request):
     if request.method == 'POST':
         form = MemberForm(request.POST, request.FILES)
         if form.is_valid():
-            member = form.save()
-            
-            # Send welcome email asynchronously
-            try:
-                send_welcome_email.delay(member.id)
-            except Exception:
-                # If Celery is not running, skip email for now
-                pass
-            
-            messages.success(
-                request, 
-                f'🎉 Member {member.name} enrolled successfully! Welcome to The Fit Forge Gym.'
-            )
-            # Redirect back to enrollment form for next member
-            return redirect('member_enroll')
+            with transaction.atomic():
+                member = form.save(commit=False)
+                member.save()
+                
+                # Send welcome email only if email is provided and Celery is available
+                if member.email:
+                    try:
+                        send_welcome_email.delay(member.id)
+                    except Exception:
+                        # If Celery is not running, skip email silently
+                        pass
+                
+                messages.success(
+                    request, 
+                    f'🎉 Member {member.name} enrolled successfully! Welcome to The Fit Forge Gym.'
+                )
+                # Redirect back to enrollment form for next member
+                return redirect('member_enroll')
     else:
         form = MemberForm()
     
     return render(request, 'members/member_enroll.html', {'form': form})
+
+
+@login_required
+def quick_member_enroll(request):
+    """Quick member enrollment with minimal fields"""
+    if request.method == 'POST':
+        form = QuickMemberForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                member = form.save(commit=False)
+                member.save()
+                
+                # Send welcome email only if email is provided and Celery is available
+                if member.email:
+                    try:
+                        send_welcome_email.delay(member.id)
+                    except Exception:
+                        pass
+                
+                messages.success(
+                    request, 
+                    f'⚡ Member {member.name} enrolled quickly! You can add more details later if needed.'
+                )
+                # Redirect back to quick enrollment form for next member
+                return redirect('quick_member_enroll')
+    else:
+        form = QuickMemberForm()
+    
+    return render(request, 'members/quick_member_enroll.html', {'form': form})
 
 
 @login_required
@@ -227,9 +260,10 @@ def member_edit(request, pk):
     if request.method == 'POST':
         form = MemberForm(request.POST, request.FILES, instance=member)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'✅ Member {member.name} updated successfully!')
-            return redirect('member_detail', pk=member.pk)
+            with transaction.atomic():
+                form.save()
+                messages.success(request, f'✅ Member {member.name} updated successfully!')
+                return redirect('member_detail', pk=member.pk)
     else:
         form = MemberForm(instance=member)
     
@@ -481,22 +515,25 @@ def convert_lead(request, pk):
         
         member_form = MemberForm(request.POST, request.FILES, initial=initial_data)
         if member_form.is_valid():
-            member = member_form.save()
-            
-            # Mark lead as converted
-            lead.mark_converted(member)
-            
-            # Send welcome email
-            try:
-                send_welcome_email.delay(member.id)
-            except Exception:
-                pass
-            
-            messages.success(
-                request, 
-                f'🎉 Lead {lead.name} converted to member successfully! Welcome to The Fit Forge Gym.'
-            )
-            return redirect('member_detail', pk=member.pk)
+            with transaction.atomic():
+                member = member_form.save(commit=False)
+                member.save()
+                
+                # Mark lead as converted
+                lead.mark_converted(member)
+                
+                # Send welcome email only if email is provided
+                if member.email:
+                    try:
+                        send_welcome_email.delay(member.id)
+                    except Exception:
+                        pass
+                
+                messages.success(
+                    request, 
+                    f'🎉 Lead {lead.name} converted to member successfully! Welcome to The Fit Forge Gym.'
+                )
+                return redirect('member_detail', pk=member.pk)
     else:
         # Pre-fill the form with lead data
         initial_data = {

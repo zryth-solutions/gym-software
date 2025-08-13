@@ -76,7 +76,9 @@
                             {% endif %}
                             <div class="flex-grow-1">
                                 <h5 class="card-title mb-1">{{ member.name }}</h5>
-                                <p class="text-muted mb-0 small">{{ member.age }} years • {{ member.get_gender_display }}</p>
+                                <p class="text-muted mb-0 small">
+                                    {% if member.age %}{{ member.age }} years • {% endif %}{{ member.get_gender_display }}
+                                </p>
                             </div>
                             <!-- Status Badge -->
                             {% if member.is_membership_expired %}
