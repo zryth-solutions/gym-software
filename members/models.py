@@ -6,8 +6,8 @@ from django.utils import timezone
 
 class Member(models.Model):
     MEMBERSHIP_TYPES = [
-        ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
         ('half_yearly', 'Half-Yearly'),
         ('annual', 'Annual'),
     ]
@@ -96,30 +96,35 @@ class Member(models.Model):
         if not self.member_since:
             self.member_since = date.today()
         
-        # Check if this is an update and membership type has changed
+        # Check if this is an update and important fields have changed
         if self.pk:  # Object exists (update operation)
             try:
                 old_instance = Member.objects.get(pk=self.pk)
-                if old_instance.membership_type != self.membership_type:
-                    # Membership type changed, recalculate expiry from today
-                    if self.membership_type == 'weekly':
-                        self.expiry_date = date.today() + timedelta(weeks=1)
+                membership_type_changed = old_instance.membership_type != self.membership_type
+                join_date_changed = old_instance.member_since != self.member_since
+                
+                # Recalculate expiry if membership type or join date changed
+                if membership_type_changed or join_date_changed:
+                    base_date = self.member_since if join_date_changed else date.today()
+                    
+                    if self.membership_type == 'quarterly':
+                        self.expiry_date = base_date + timedelta(days=90)
                     elif self.membership_type == 'monthly':
-                        self.expiry_date = date.today() + timedelta(days=30)
+                        self.expiry_date = base_date + timedelta(days=30)
                     elif self.membership_type == 'half_yearly':
-                        self.expiry_date = date.today() + timedelta(days=180)
+                        self.expiry_date = base_date + timedelta(days=180)
                     elif self.membership_type == 'annual':
-                        self.expiry_date = date.today() + timedelta(days=365)
+                        self.expiry_date = base_date + timedelta(days=365)
                     else:
                         # Default to monthly if membership type is not recognized
-                        self.expiry_date = date.today() + timedelta(days=30)
+                        self.expiry_date = base_date + timedelta(days=30)
             except Member.DoesNotExist:
                 pass
         
         # Auto-calculate expiry date for new members if not provided
         if not self.expiry_date:
-            if self.membership_type == 'weekly':
-                self.expiry_date = self.member_since + timedelta(weeks=1)
+            if self.membership_type == 'quarterly':
+                self.expiry_date = self.member_since + timedelta(days=90)
             elif self.membership_type == 'monthly':
                 self.expiry_date = self.member_since + timedelta(days=30)
             elif self.membership_type == 'half_yearly':
