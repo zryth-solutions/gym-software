@@ -8,7 +8,7 @@ class Member(models.Model):
     MEMBERSHIP_TYPES = [
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
-        ('quarterly', 'Quarterly'),
+        ('half_yearly', 'Half-Yearly'),
         ('annual', 'Annual'),
     ]
     
@@ -106,8 +106,8 @@ class Member(models.Model):
                         self.expiry_date = date.today() + timedelta(weeks=1)
                     elif self.membership_type == 'monthly':
                         self.expiry_date = date.today() + timedelta(days=30)
-                    elif self.membership_type == 'quarterly':
-                        self.expiry_date = date.today() + timedelta(days=90)
+                    elif self.membership_type == 'half_yearly':
+                        self.expiry_date = date.today() + timedelta(days=180)
                     elif self.membership_type == 'annual':
                         self.expiry_date = date.today() + timedelta(days=365)
                     else:
@@ -122,8 +122,8 @@ class Member(models.Model):
                 self.expiry_date = self.member_since + timedelta(weeks=1)
             elif self.membership_type == 'monthly':
                 self.expiry_date = self.member_since + timedelta(days=30)
-            elif self.membership_type == 'quarterly':
-                self.expiry_date = self.member_since + timedelta(days=90)
+            elif self.membership_type == 'half_yearly':
+                self.expiry_date = self.member_since + timedelta(days=180)
             elif self.membership_type == 'annual':
                 self.expiry_date = self.member_since + timedelta(days=365)
             else:
