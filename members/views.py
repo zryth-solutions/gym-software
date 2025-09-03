@@ -10,7 +10,6 @@ from datetime import date, timedelta
 from django.utils import timezone
 from .models import Member, PaymentHistory, Lead
 from .forms import MemberForm, MemberFilterForm, LeadCaptureForm, LeadFilterForm, LeadUpdateForm, QuickMemberForm
-from .tasks import send_welcome_email
 
 
 def login_view(request):
@@ -183,20 +182,6 @@ def member_enroll(request):
             with transaction.atomic():
                 member = form.save(commit=False)
                 member.save()
-                
-                # Send welcome email only if email is provided and Celery is available
-                if member.email:
-                    try:
-                        send_welcome_email.delay(member.id)
-                    except Exception:
-                        # If Celery is not running, skip email silently
-                        pass
-                
-                messages.success(
-                    request, 
-                    f'🎉 Member {member.name} enrolled successfully! Welcome to The Fit Forge Gym.'
-                )
-                # Redirect back to enrollment form for next member
                 return redirect('member_enroll')
     else:
         form = MemberForm()
@@ -213,19 +198,6 @@ def quick_member_enroll(request):
             with transaction.atomic():
                 member = form.save(commit=False)
                 member.save()
-                
-                # Send welcome email only if email is provided and Celery is available
-                if member.email:
-                    try:
-                        send_welcome_email.delay(member.id)
-                    except Exception:
-                        pass
-                
-                messages.success(
-                    request, 
-                    f'⚡ Member {member.name} enrolled quickly! You can add more details later if needed.'
-                )
-                # Redirect back to quick enrollment form for next member
                 return redirect('quick_member_enroll')
     else:
         form = QuickMemberForm()
@@ -521,18 +493,6 @@ def convert_lead(request, pk):
                 
                 # Mark lead as converted
                 lead.mark_converted(member)
-                
-                # Send welcome email only if email is provided
-                if member.email:
-                    try:
-                        send_welcome_email.delay(member.id)
-                    except Exception:
-                        pass
-                
-                messages.success(
-                    request, 
-                    f'🎉 Lead {lead.name} converted to member successfully! Welcome to The Fit Forge Gym.'
-                )
                 return redirect('member_detail', pk=member.pk)
     else:
         # Pre-fill the form with lead data
