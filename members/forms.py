@@ -18,7 +18,7 @@ class MemberForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name', 'required': True}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address (Optional)'}),
-            'mobile_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number', 'required': True}),
+            'mobile_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number (Optional)'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Address (Optional)'}),
@@ -223,8 +223,7 @@ class QuickMemberForm(forms.ModelForm):
             }),
             'mobile_phone': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg',
-                'placeholder': 'Mobile Number',
-                'required': True
+                'placeholder': 'Mobile Number (Optional)'
             }),
             'membership_type': forms.Select(attrs={
                 'class': 'form-control form-control-lg'

@@ -30,7 +30,9 @@ class Member(models.Model):
     email = models.EmailField(unique=True, blank=True, null=True, help_text="Email address for communication (optional)")
     mobile_phone = models.CharField(
         max_length=15,
-        help_text="Contact number"
+        blank=True,
+        null=True,
+        help_text="Contact number (optional)"
     )
     date_of_birth = models.DateField(blank=True, null=True, help_text="Date of birth (optional)")
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
